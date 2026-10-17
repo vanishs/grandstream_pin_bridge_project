@@ -1,7 +1,7 @@
 {
   "domain": "grandstream_pin_bridge",
   "name": "GDS3725 Private PIN Bridge",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "codeowners": [],
   "config_flow": true,
   "dependencies": [

@@ -22,7 +22,7 @@ async def async_register_device_panel(hass: HomeAssistant) -> None:
         StaticPathConfig(_URL, str(Path(__file__).parent / "frontend/device-users.js"), False)
     ])
     websocket_api.async_register_command(hass, websocket_users)
-    frontend.add_extra_js_url(hass, f"{_URL}?v=1")
+    frontend.add_extra_js_url(hass, f"{_URL}?v=2")
     hass.data[_REGISTERED] = True
 
 
@@ -33,7 +33,9 @@ async def async_register_device_panel(hass: HomeAssistant) -> None:
 @websocket_api.async_response
 async def websocket_users(hass, connection, msg):
     """Return only public user identity fields to authenticated administrators."""
-    connection.require_admin()
+    if connection.user is None or not connection.user.is_admin:
+        connection.send_error(msg["id"], "unauthorized", "Administrator access required")
+        return
     device = dr.async_get(hass).async_get(msg["device_id"])
     if device is None:
         connection.send_error(msg["id"], "not_found", "Device not found")

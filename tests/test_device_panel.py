@@ -19,25 +19,22 @@ def test_device_users_websocket_authorization_and_errors():
                  'dr': SimpleNamespace(async_get=lambda hass: SimpleNamespace(async_get=lambda device_id: device))}
     exec(compile(ast.Module(body=[handler], type_ignores=[]), str(path), 'exec'), namespace)
     results, errors = [], []
-    admin = True
-    def require_admin():
-        if not admin:
-            raise PermissionError
-    conn = SimpleNamespace(require_admin=require_admin, send_result=lambda *args: results.append(args), send_error=lambda *args: errors.append(args))
+    # ActiveConnection exposes user; it has no require_admin() method.
+    conn = SimpleNamespace(user=SimpleNamespace(is_admin=True), send_result=lambda *args: results.append(args), send_error=lambda *args: errors.append(args))
     hass = SimpleNamespace(data={'grandstream_pin_bridge': {'entry': SimpleNamespace(client=client)}})
     msg = {'id': 1, 'device_id': 'device'}
     async def run():
-        nonlocal admin, device
+        nonlocal device
         await namespace['websocket_users'](hass, conn, msg)
         assert results == [(1, {'users': [{'user_id': '35', 'username': 'n35'}]})]
-        admin = False
-        try:
-            await namespace['websocket_users'](hass, conn, msg)
-            assert False
-        except PermissionError:
-            pass
+        conn.user.is_admin = False
+        await namespace['websocket_users'](hass, conn, msg)
+        assert errors[-1][1] == 'unauthorized'
+        conn.user = None
+        await namespace['websocket_users'](hass, conn, msg)
+        assert errors[-1][1] == 'unauthorized'
         assert client.users.await_count == 1
-        admin = True
+        conn.user = SimpleNamespace(is_admin=True)
         device.config_entries.clear()
         await namespace['websocket_users'](hass, conn, msg)
         assert errors[-1][1] == 'not_loaded'

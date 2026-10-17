@@ -64,10 +64,17 @@ class GDSAccessUsers extends HTMLElement {
       status.textContent = this.zh ? `共 ${result.users.length} 位用户` : `${result.users.length} users`;
     } catch (error) {
       if (requestId !== this.requestId) return;
-      const auth = error?.code === "invalid_auth";
-      status.textContent = this.zh
-        ? (auth ? "设备认证失败或无读取权限。" : "读取失败，请确认集成已加载及设备可连接后重试。")
-        : (auth ? "Device authentication or permissions rejected." : "Could not read users. Check the integration and device connection, then retry.");
+      const messages = {
+        invalid_auth: ["设备认证失败或无读取权限。", "Device authentication or permissions rejected."],
+        unauthorized: ["需要 HA 管理员权限。", "Home Assistant administrator access required."],
+        not_found: ["未找到此设备，请重新打开设备页。", "Device not found. Reopen the device page."],
+        not_loaded: ["此设备的 GDS 集成未加载，请检查集成状态。", "The GDS integration for this device is not loaded."],
+        unknown_command: ["用户列表接口未注册，请更新完整集成并重启 HA。", "Users endpoint is not registered. Update the full integration and restart HA."],
+        unknown_error: ["HA 后端处理失败，请查看 HA 日志。", "Home Assistant backend error. Check the HA logs."],
+        cannot_connect: ["无法读取设备用户，请检查设备连接后重试。", "Could not read device users. Check the device connection and retry."],
+      };
+      const fallback = ["读取失败，请检查连接或 HA 日志后重试。", "Request failed. Check the connection or HA logs and retry."];
+      status.textContent = (messages[error?.code] || fallback)[this.zh ? 0 : 1];
     } finally {
       if (requestId === this.requestId) button.disabled = false;
     }
