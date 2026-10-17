@@ -20,6 +20,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import AuthenticationError, DeviceError, GDSClient
 from .bridge import PinBridge
+from .device_panel import async_register_device_panel
 from .const import CONF_USE_HTTPS, CONF_VERIFY_SSL, CONF_WEBHOOK_ID, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
@@ -37,6 +38,12 @@ def create_client(hass: HomeAssistant, config: dict) -> GDSClient:
         str(config[CONF_USERNAME]), str(config[CONF_PASSWORD]),
         bool(config.get(CONF_VERIFY_SSL, False))
     )
+
+
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    """Register shared frontend resources once before loading device entries."""
+    await async_register_device_panel(hass)
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

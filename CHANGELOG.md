@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0
+
+- 设备详情页新增 Access Control Users 卡片，打开读取，支持手动刷新。
+- 管理员 WebSocket 接口检查设备归属，只返回用户 ID 和名称。
+- 统一 GDS API 会话、响应校验与单次重登重发逻辑；保留配置面板备用入口。
+
 ## 0.1.0 (2026-10-16)
 
 - 独立的 Home Assistant Custom Integration 域 `grandstream_pin_bridge`
