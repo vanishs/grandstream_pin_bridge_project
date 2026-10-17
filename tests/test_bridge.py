@@ -56,6 +56,9 @@ class FakeDevice:
     base_url = "https://192.168.9.230"
     def __init__(self):
         self.data = [{"uuid":"33", "event_uuid":"ev33", "user_name":"35"}]
+    async def users(self):
+        return [{"user_id": "35", "username": "ticket-A", "enabled": True,
+                 "valid_from": "20261017000000", "valid_until": "20261017235959"}]
     async def records(self, page_size=50):
         return self.data[:page_size]
 
@@ -99,4 +102,39 @@ def test_ambiguous_extra_record_emits_nothing():
         assert hass.events == []
         assert bridge.cursor == 35
         await bridge.stop()
+    asyncio.run(run())
+
+
+def test_order_count_persists_and_sync_failure_does_not_use_stale_ticket():
+    from grandstream_pin_bridge.api import DeviceError
+    async def run():
+        SAVED.clear()
+        hass, device = FakeHass(), FakeDevice()
+        bridge = PinBridge(hass, 'orders', device, {})
+        await bridge.start()
+        try:
+            rows = await bridge.access_users()
+            assert rows[0]['status'] == 'sold'
+            record = {'uuid': '34', 'event_uuid': 'checkin1', 'user_name': '35',
+                      'open_door_time': '2026-10-17 09:12:00'}
+            await bridge._emit(record)
+            await bridge._emit(record)
+            assert hass.events[-1][1]['entry_count'] == 1
+            assert hass.events[-1][1]['ticket_id'] == 'ticket-A'
+            assert SAVED[bridge.store.key]['checkins']['orders']['ticket-A']['entry_count'] == 1
+            async def unavailable():
+                raise DeviceError('offline')
+            device.users = unavailable
+            await bridge._emit({**record, 'uuid': '35', 'event_uuid': 'checkin2'})
+            assert 'ticket_id' not in hass.events[-1][1]
+            assert bridge.checkins.orders['ticket-A']['entry_count'] == 1
+        finally:
+            await bridge.stop()
+        restored = PinBridge(hass, 'orders', device, {})
+        await restored.start()
+        try:
+            assert restored.checkins.rows()[0]['entry_count'] == 1
+            assert len(restored.checkins.history) == 1
+        finally:
+            await restored.stop()
     asyncio.run(run())

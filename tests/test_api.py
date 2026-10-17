@@ -94,7 +94,7 @@ def test_access_users_xml_and_session_retry():
             if len(calls) == 1:
                 return web.Response(status=403)
             return web.Response(text='''<Configuration><ResCode>0</ResCode><total>2</total>
-                <item><user_id>35</user_id><username>A &amp; B</username><passwd>private-pin</passwd></item>
+                <item><user_id>35</user_id><username>A &amp; B</username><enable_card>1</enable_card><SOD>20261017000000</SOD><EOD>20261017235959</EOD><passwd>private-pin</passwd></item>
                 <item><user_id>11</user_id><username>n11</username><card_num>private-card</card_num></item>
                 </Configuration>''', content_type="application/xml")
 
@@ -109,7 +109,10 @@ def test_access_users_xml_and_session_retry():
         try:
             async with ClientSession() as session:
                 client = GDSClient(session, f"http://127.0.0.1:{port}", "user", "secret")
-                expected = [{"user_id": "35", "username": "A & B"}, {"user_id": "11", "username": "n11"}]
+                expected = [{"user_id": "35", "username": "A & B", "enabled": True,
+                             "valid_from": "20261017000000", "valid_until": "20261017235959"},
+                            {"user_id": "11", "username": "n11", "enabled": None,
+                             "valid_from": "", "valid_until": ""}]
                 assert await client.users() == expected
                 assert await client.users() == expected
                 assert calls == ["sid=sid1", "sid=sid2", "sid=sid2"]

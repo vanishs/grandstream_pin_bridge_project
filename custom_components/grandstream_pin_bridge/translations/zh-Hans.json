@@ -25,7 +25,7 @@
   },
   "options": {
     "step": {
-      "settings": {
+      "init": {
         "title": "Private PIN 回调配置",
         "description": "在 GDS3725 的 Maintenance → Event Notification → Valid Password Input (P15529) 中，将 Action URL 设置为 `http://HA的局域网IP{webhook_path}`。如果 HA 使用 HTTPS 或其他端口，请对应调整。此 URL 属于密钥，不要公开；尽量直接访问 HA，避免反向代理。",
         "data": {
@@ -37,18 +37,6 @@
           "forward_url": "可选外部转发地址（JSON POST）",
           "new_forward_token": "新的转发 Bearer Token（留空不修改）"
         }
-      },
-      "init": {
-        "title": "GDS3725",
-        "menu_options": {
-          "users": "门禁用户（Access Control Users）",
-          "settings": "回调与连接设置"
-        }
-      },
-      "users": {
-        "title": "门禁用户（Access Control Users）",
-        "description": "本次从设备读取：{count} 位用户。点击刷新重新读取。读取失败时不显示旧列表。\n\n| user_id | username |\n| --- | --- |\n{users}",
-        "submit": "刷新"
       }
     },
     "error": {

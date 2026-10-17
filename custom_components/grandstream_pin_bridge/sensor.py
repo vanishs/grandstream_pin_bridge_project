@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.logbook import async_log_entry
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -51,6 +52,18 @@ class BaseGDSBridgeSensor(SensorEntity):
 
 
 class LastPinUserSensor(BaseGDSBridgeSensor):
+    @callback
+    def _handle_update(self) -> None:
+        super()._handle_update()
+        event = self.bridge.last_event
+        if event.get("ticket_id") and event.get("event_uuid") != getattr(self, "_logged_event", None):
+            self._logged_event = event["event_uuid"]
+            async_log_entry(
+                self.hass, f"订单 {event['ticket_id']}",
+                f"{event['open_door_time']} · 座位 {event['user_id']} · 第 {event['entry_count']} 次入场",
+                domain=DOMAIN, entity_id=self.entity_id,
+            )
+
     _key = "last_pin_user"
     _attr_icon = "mdi:account-key"
 

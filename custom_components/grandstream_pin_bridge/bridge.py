@@ -12,7 +12,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.storage import Store
 
-from .api import GDSClient
+from .api import GDSClient, DeviceError
+from .checkin import CheckIns
 from .const import (
     CONF_FORWARD_URL,
     CONF_FORWARD_TOKEN,
@@ -55,10 +56,13 @@ class PinBridge:
         self.last_event: dict[str, Any] = {}
         self.pin_count: int = 0
         self.recent_ids: list[str] = []
+        self.checkins = CheckIns()
+        self._state_lock = asyncio.Lock()
         self.host = urlsplit(client.base_url).hostname or ""
 
     async def start(self) -> None:
         state = await self.store.async_load() or {}
+        self.checkins = CheckIns(state.get("checkins"))
         self.last_event = state.get("last_event", {})
         self.pin_count = int(state.get("pin_count", 0))
         self.recent_ids = list(state.get("recent_ids", []))[-100:]
@@ -159,6 +163,20 @@ class PinBridge:
             await self._persist()
 
     async def _emit(self, record: dict[str, Any]) -> None:
+        async with self._state_lock:
+            await self._emit_locked(record)
+
+    async def access_users(self):
+        async with self._state_lock:
+            await self._sync_users()
+            await self._persist()
+            return self.checkins.rows()
+
+    async def _sync_users(self):
+        users = await self.client.users()
+        self.checkins.sync(users, datetime.now(timezone.utc).isoformat(timespec="seconds"))
+
+    async def _emit_locked(self, record: dict[str, Any]) -> None:
         event_uuid = str(record["event_uuid"])
         if event_uuid in self.recent_ids:
             return
@@ -172,6 +190,14 @@ class PinBridge:
             "device": self.host,
             "received_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         }
+        try:
+            await self._sync_users()
+        except (DeviceError, OSError, ValueError):
+            _LOGGER.warning("User sync failed; PIN event retained without order attribution")
+        else:
+            entry = self.checkins.enter(event)
+            if entry:
+                event.update(ticket_id=entry["ticket_id"], entry_count=entry["entry_count"])
         self.last_event = event
         self.pin_count += 1
         self.recent_ids = (self.recent_ids + [event_uuid])[-100:]
@@ -220,6 +246,7 @@ class PinBridge:
 
     async def _persist(self) -> None:
         await self.store.async_save({
+            "checkins": self.checkins.dump(),
             "cursor": self.cursor,
             "last_event": self.last_event,
             "pin_count": self.pin_count,

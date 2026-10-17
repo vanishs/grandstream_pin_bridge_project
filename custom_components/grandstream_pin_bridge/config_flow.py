@@ -109,41 +109,6 @@ class GDS3725PINOptionsFlow(config_entries.OptionsFlow):
         self._entry = config_entry
 
     async def async_step_init(self, user_input: dict | None = None):
-        return self.async_show_menu(step_id="init", menu_options=["users", "settings"])
-
-    async def async_step_users(self, user_input: dict | None = None):
-        """Read on entry and on every refresh, without persisting user data."""
-        errors = {}
-        rows = ""
-        try:
-            bridge = self.hass.data.get(DOMAIN, {}).get(self._entry.entry_id)
-            if bridge is None:
-                raise DeviceError("Integration is not loaded")
-            users = await bridge.client.users()
-            # Escape device-supplied names before embedding in HA Markdown.
-            def cell(value):
-                return "".join(
-                    char if char.isalnum() or char == " " else f"&#{ord(char)};"
-                    for char in value
-                )
-            rows = "\n".join(
-                f"| {cell(user['user_id'])} | {cell(user['username'])} |"
-                for user in users
-            )
-            count = str(len(users))
-        except AuthenticationError:
-            errors["base"] = "invalid_auth"
-            count = "—"
-        except (DeviceError, OSError, ValueError):
-            errors["base"] = "cannot_connect"
-            count = "—"
-        return self.async_show_form(
-            step_id="users", data_schema=vol.Schema({}), errors=errors,
-            description_placeholders={"users": rows, "count": count},
-            last_step=False,
-        )
-
-    async def async_step_settings(self, user_input: dict | None = None):
         current = {**self._entry.data, **self._entry.options}
         errors: dict[str, str] = {}
         if user_input is not None:
@@ -191,6 +156,6 @@ class GDS3725PINOptionsFlow(config_entries.OptionsFlow):
                 vol.All(vol.Coerce(float), vol.Range(min=0.1, max=2.0)),
         })
         return self.async_show_form(
-            step_id="settings", data_schema=schema, errors=errors,
+            step_id="init", data_schema=schema, errors=errors,
             description_placeholders={"webhook_path": webhook_path},
         )

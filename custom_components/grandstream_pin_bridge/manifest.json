@@ -1,14 +1,15 @@
 {
   "domain": "grandstream_pin_bridge",
   "name": "GDS3725 Private PIN Bridge",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "codeowners": [],
   "config_flow": true,
   "dependencies": [
     "webhook",
     "frontend",
     "http",
-    "websocket_api"
+    "websocket_api",
+    "logbook"
   ],
   "requirements": [],
   "integration_type": "device",

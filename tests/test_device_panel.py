@@ -21,7 +21,7 @@ def test_device_users_websocket_authorization_and_errors():
     results, errors = [], []
     # ActiveConnection exposes user; it has no require_admin() method.
     conn = SimpleNamespace(user=SimpleNamespace(is_admin=True), send_result=lambda *args: results.append(args), send_error=lambda *args: errors.append(args))
-    hass = SimpleNamespace(data={'grandstream_pin_bridge': {'entry': SimpleNamespace(client=client)}})
+    hass = SimpleNamespace(data={'grandstream_pin_bridge': {'entry': SimpleNamespace(access_users=client.users)}})
     msg = {'id': 1, 'device_id': 'device'}
     async def run():
         nonlocal device

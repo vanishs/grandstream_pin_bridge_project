@@ -11,6 +11,8 @@ class GDSAccessUsers extends HTMLElement {
         h2 { font-size:20px; font-weight:400; margin:0; }
         button { color:var(--primary-color); background:transparent; border:1px solid var(--divider-color); border-radius:8px; padding:8px 16px; cursor:pointer; }
         button:disabled { opacity:.5; cursor:wait; }
+        .dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-inline-end:6px; }
+        .dot.unsold { background:#d32f2f; } .dot.sold { background:#e6a700; } .dot.checked_in { background:#2e7d32; } .dot.unknown { background:#888; }
         .scroll { max-height:400px; overflow:auto; }
         table { width:100%; border-collapse:collapse; }
         th,td { text-align:start; padding:10px 4px; border-bottom:1px solid var(--divider-color); overflow-wrap:anywhere; }
@@ -19,7 +21,7 @@ class GDSAccessUsers extends HTMLElement {
       </style>
       <ha-card><header><h2>Access Control Users</h2><button type="button"></button></header>
         <p role="status" aria-live="polite"></p>
-        <div class="scroll"><table><thead><tr><th>user_id</th><th>username</th></tr></thead><tbody></tbody></table></div>
+        <div class="scroll"><table><thead><tr><th>状态</th><th>座位号</th><th>订单号</th><th>入场次数</th><th>首次 check-in</th></tr></thead><tbody></tbody></table></div>
       </ha-card>`;
     this.shadowRoot.querySelector("button").addEventListener("click", () => this.refresh());
   }
@@ -34,7 +36,12 @@ class GDSAccessUsers extends HTMLElement {
 
   get zh() { return this.hass?.language?.startsWith("zh"); }
 
+  connectedCallback() {
+    this.timer = setInterval(() => { if (!this.shadowRoot.querySelector("button").disabled) this.refresh(); }, 30000);
+  }
+
   disconnectedCallback() {
+    clearInterval(this.timer);
     // Ignore requests completing after navigation/removal.
     this.requestId = (this.requestId || 0) + 1;
   }
@@ -54,9 +61,23 @@ class GDSAccessUsers extends HTMLElement {
       if (requestId !== this.requestId) return;
       for (const user of result.users) {
         const row = document.createElement("tr");
-        for (const key of ["user_id", "username"]) {
+        const labels = {
+          unsold: ["未售出／已失效", "Unsold / expired"], sold: ["未 check-in", "Not checked in"],
+          checked_in: ["已 check-in", "Checked in"], unknown: ["未知", "Unknown"],
+        };
+        const state = labels[user.status] ? user.status : "unknown";
+        const stateCell = document.createElement("td");
+        const dot = document.createElement("span");
+        dot.className = `dot ${state}`;
+        dot.setAttribute("aria-hidden", "true");
+        stateCell.append(dot, document.createTextNode(labels[state][this.zh ? 0 : 1]));
+        row.append(stateCell);
+        const values = [user.user_id, state === "unsold" ? "—" : user.username,
+          state === "unsold" || state === "unknown" ? "—" : user.entry_count,
+          state === "unsold" ? "—" : (user.first_checkin_at || "—")];
+        for (const value of values) {
           const cell = document.createElement("td");
-          cell.textContent = user[key];
+          cell.textContent = value;
           row.append(cell);
         }
         body.append(row);

@@ -22,7 +22,7 @@ async def async_register_device_panel(hass: HomeAssistant) -> None:
         StaticPathConfig(_URL, str(Path(__file__).parent / "frontend/device-users.js"), False)
     ])
     websocket_api.async_register_command(hass, websocket_users)
-    frontend.add_extra_js_url(hass, f"{_URL}?v=2")
+    frontend.add_extra_js_url(hass, f"{_URL}?v=3")
     hass.data[_REGISTERED] = True
 
 
@@ -48,7 +48,7 @@ async def websocket_users(hass, connection, msg):
         connection.send_error(msg["id"], "not_loaded", "GDS integration is not loaded")
         return
     try:
-        users = await bridge.client.users()
+        users = await bridge.access_users()
     except AuthenticationError:
         connection.send_error(msg["id"], "invalid_auth", "Device rejected authentication or permissions")
     except (DeviceError, OSError, ValueError):

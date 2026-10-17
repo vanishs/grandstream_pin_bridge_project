@@ -185,8 +185,8 @@ class GDSClient:
                     await self._login()
         raise RuntimeError("unreachable")
 
-    async def users(self) -> list[dict[str, str]]:
-        """Fetch at most 100 access users; discard all other device fields."""
+    async def users(self) -> list[dict[str, Any]]:
+        """Fetch at most 100 seat identities, enable flags and validity windows."""
         root = await self.request(
             "/goform/config?cmd=get&type=user_list&page=1&page_size=100",
             headers={"Accept": "application/xml"}, response_format="xml",
@@ -200,7 +200,10 @@ class GDSClient:
             username = item.findtext("username")
             if not user_id or username is None:
                 raise DeviceError("user_list is missing user identity")
-            users.append({"user_id": user_id, "username": username})
+            users.append({"user_id": user_id, "username": username,
+                          "enabled": {"0": False, "1": True}.get(item.findtext("enable_card")),
+                          "valid_from": item.findtext("SOD") or "",
+                          "valid_until": item.findtext("EOD") or ""})
         return users
 
     async def records(self, *, page_size: int = 50) -> list[dict[str, Any]]:
