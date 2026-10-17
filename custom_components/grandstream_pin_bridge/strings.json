@@ -1,0 +1,59 @@
+{
+  "title": "GDS3725 Private PIN Bridge",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect GDS3725",
+        "description": "Use the GDS Web `user` or `admin` account.",
+        "data": {
+          "host": "Device IP address",
+          "port": "Web port",
+          "use_https": "Use HTTPS",
+          "verify_ssl": "Verify device TLS certificate",
+          "username": "Web account username",
+          "password": "Web account password"
+        }
+      }
+    },
+    "error": {
+      "invalid_host": "Enter a valid device IPv4/IPv6 address",
+      "invalid_auth": "Authentication failed or account cannot access door records",
+      "cannot_connect": "Failed to reach device or read door records"
+    },
+    "abort": {
+      "already_configured": "This device is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Private PIN callback settings",
+        "description": "Set GDS3725 **Maintenance → Event Notification → Valid Password Input (P15529)** Action URL to `http://YOUR_HA_IP{webhook_path}`. Change HTTP/HTTPS and port to match your Home Assistant listener. Treat the URL as a secret. Do not use a URL that passes through a proxy.",
+        "data": {
+          "username": "Web account username",
+          "new_password": "New password (leave blank to keep)",
+          "verify_ssl": "Verify device TLS certificate",
+          "match_timeout": "Maximum record wait (seconds)",
+          "poll_interval": "Query interval (seconds)",
+          "forward_url": "Optional forwarding URL (POST JSON)",
+          "new_forward_token": "New forwarding Bearer token (leave blank to keep)"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Account/password rejected by device",
+      "cannot_connect": "Could not query device",
+      "invalid_forward_url": "Forward URL must begin with http:// or https://"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "last_pin_user": {
+        "name": "Last Private PIN user ID"
+      },
+      "pin_events": {
+        "name": "Private PIN events"
+      }
+    }
+  }
+}

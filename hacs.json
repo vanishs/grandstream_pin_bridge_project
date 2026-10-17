@@ -1,0 +1,6 @@
+{
+  "name": "GDS3725 Private PIN Bridge",
+  "content_in_root": false,
+  "homeassistant": "2024.6.0",
+  "render_readme": true
+}

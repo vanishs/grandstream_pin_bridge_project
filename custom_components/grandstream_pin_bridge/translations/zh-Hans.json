@@ -1,0 +1,58 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "连接 GDS3725",
+        "description": "使用设备 Web 的 user 或 admin 账号。",
+        "data": {
+          "host": "设备 IP 地址",
+          "port": "Web 端口",
+          "use_https": "使用 HTTPS",
+          "verify_ssl": "验证设备 TLS 证书",
+          "username": "Web 账号用户名",
+          "password": "Web 账号密码"
+        }
+      }
+    },
+    "error": {
+      "invalid_host": "请输入有效 IP 地址",
+      "invalid_auth": "认证失败或没有开门记录读取权限",
+      "cannot_connect": "无法连接设备或读取开门记录"
+    },
+    "abort": {
+      "already_configured": "该设备已经配置"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Private PIN 回调配置",
+        "description": "在 GDS3725 的 Maintenance → Event Notification → Valid Password Input (P15529) 中，将 Action URL 设置为 `http://HA的局域网IP{webhook_path}`。如果 HA 使用 HTTPS 或其他端口，请对应调整。此 URL 属于密钥，不要公开；尽量直接访问 HA，避免反向代理。",
+        "data": {
+          "username": "Web 账号用户名",
+          "new_password": "新密码（留空不修改）",
+          "verify_ssl": "验证设备 TLS 证书",
+          "match_timeout": "最多等待记录秒数",
+          "poll_interval": "查询间隔秒数",
+          "forward_url": "可选外部转发地址（JSON POST）",
+          "new_forward_token": "新的转发 Bearer Token（留空不修改）"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "账号或密码未通过设备验证",
+      "cannot_connect": "读取设备失败",
+      "invalid_forward_url": "转发 URL 必须以 http:// 或 https:// 开头"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "last_pin_user": {
+        "name": "最近 Private PIN 用户 ID"
+      },
+      "pin_events": {
+        "name": "Private PIN 事件累计"
+      }
+    }
+  }
+}

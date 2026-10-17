@@ -1,0 +1,13 @@
+{
+  "domain": "grandstream_pin_bridge",
+  "name": "GDS3725 Private PIN Bridge",
+  "version": "0.1.0",
+  "codeowners": [],
+  "config_flow": true,
+  "dependencies": [
+    "webhook"
+  ],
+  "requirements": [],
+  "integration_type": "device",
+  "iot_class": "local_push"
+}
