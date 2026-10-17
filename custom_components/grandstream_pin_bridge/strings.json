@@ -49,10 +49,7 @@
   "entity": {
     "sensor": {
       "last_pin_user": {
-        "name": "Last Private PIN user ID"
-      },
-      "pin_events": {
-        "name": "Private PIN events"
+        "name": "Entry"
       }
     }
   }

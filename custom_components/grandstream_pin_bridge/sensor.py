@@ -6,6 +6,7 @@ from homeassistant.components.logbook import async_log_entry
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -17,10 +18,11 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     bridge: PinBridge = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([
-        LastPinUserSensor(bridge, entry),
-        PinCountSensor(bridge, entry),
-    ])
+    registry = er.async_get(hass)
+    obsolete = registry.async_get_entity_id("sensor", DOMAIN, f"{entry.entry_id}_pin_events")
+    if obsolete:
+        registry.async_remove(obsolete)
+    async_add_entities([LastPinUserSensor(bridge, entry)])
 
 
 class BaseGDSBridgeSensor(SensorEntity):
@@ -59,8 +61,8 @@ class LastPinUserSensor(BaseGDSBridgeSensor):
         if event.get("ticket_id") and event.get("event_uuid") != getattr(self, "_logged_event", None):
             self._logged_event = event["event_uuid"]
             async_log_entry(
-                self.hass, f"订单 {event['ticket_id']}",
-                f"{event['open_door_time']} · 座位 {event['user_id']} · 第 {event['entry_count']} 次入场",
+                self.hass, "入场",
+                f"订单 {event['ticket_id']} · 座位 {event['user_id']} · 第 {event['entry_count']} 次入场",
                 domain=DOMAIN, entity_id=self.entity_id,
             )
 
@@ -75,14 +77,6 @@ class LastPinUserSensor(BaseGDSBridgeSensor):
     def extra_state_attributes(self) -> dict:
         data = self.bridge.last_event
         return {key: data.get(key) for key in (
-            "name", "door_id", "open_door_time", "record_uuid", "event_uuid", "device"
+            "name", "door_id", "open_door_time", "record_uuid", "event_uuid", "device",
+            "ticket_id", "entry_count"
         ) if key in data}
-
-
-class PinCountSensor(BaseGDSBridgeSensor):
-    _key = "pin_events"
-    _attr_icon = "mdi:counter"
-
-    @property
-    def native_value(self) -> int:
-        return self.bridge.pin_count

@@ -27,7 +27,9 @@ def test_order_activity_links_device_entity_and_deduplicates():
     sensor._handle_update()
     sensor._handle_update()
     assert len(calls) == 1
-    assert calls[0][0][1] == '订单 ORDER-A'
+    assert calls[0][0][1] == '入场'
+    assert calls[0][0][2] == '订单 ORDER-A · 座位 35 · 第 1 次入场'
+    assert '2026-10-17' not in calls[0][0][2]
     assert '座位 35 · 第 1 次入场' in calls[0][0][2]
     assert calls[0][1]['entity_id'] == sensor.entity_id
     sensor.bridge.last_event = {'user_id': '35'}
