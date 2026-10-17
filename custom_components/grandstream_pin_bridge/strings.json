@@ -26,7 +26,7 @@
   },
   "options": {
     "step": {
-      "init": {
+      "settings": {
         "title": "Private PIN callback settings",
         "description": "Set GDS3725 **Maintenance → Event Notification → Valid Password Input (P15529)** Action URL to `http://YOUR_HA_IP{webhook_path}`. Change HTTP/HTTPS and port to match your Home Assistant listener. Treat the URL as a secret. Do not use a URL that passes through a proxy.",
         "data": {
@@ -38,6 +38,18 @@
           "forward_url": "Optional forwarding URL (POST JSON)",
           "new_forward_token": "New forwarding Bearer token (leave blank to keep)"
         }
+      },
+      "init": {
+        "title": "GDS3725",
+        "menu_options": {
+          "users": "Access Control Users",
+          "settings": "Callback and connection settings"
+        }
+      },
+      "users": {
+        "title": "Access Control Users",
+        "description": "Users read from device: {count}. Refresh to query again. Previous results are cleared on failure.\n\n| user_id | username |\n| --- | --- |\n{users}",
+        "submit": "Refresh"
       }
     },
     "error": {
